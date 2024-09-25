@@ -35,7 +35,7 @@ class strat_evaluator:
         self.predictor = series
         self.mreturn = np.exp(self.data[["strat returns"]].resample('M').sum())-1
             
-    def plot_signals(self, fundamental=None, title=None, ylabel=None, xlabel='Date', hsize=11, vsize=5, bounds=False):
+    def plot_signals(self, fundamental=None, title=None, ylabel=None, xlabel='Date', hsize=11, vsize=5, bounds=False, show=True):
         """
         Plot trading signals over time with the option to include fundamental data.
         
@@ -46,7 +46,11 @@ class strat_evaluator:
             xlabel (str): X-axis label, defaults to 'Date'.
             hsize (int): Horizontal size of the plot.
             vsize (int): Vertical size of the plot.
-            bounds (bool): If True, will plot additional boundary lines
+            bounds (bool): If True, will plot additional boundary lines.
+            show (bool): If True, displays the plot immediately.
+        
+        Returns:
+            tuple: (fig, ax) Matplotlib figure and axes objects.
         """
         if fundamental is None:
             fundamental = self.predictor
@@ -82,9 +86,13 @@ class strat_evaluator:
         
         ax.legend()
         ax.grid(True)
-        plt.show()
+        
+        if show:
+            plt.show()
+        
+        return fig, ax
     
-    def plot_equity(self, title='Strategy Returns', ylabel='Returns (%)', xlabel='Date', hsize=11, vsize=5):
+    def plot_equity(self, title='Strategy Returns', ylabel='Returns (%)', xlabel='Date', hsize=11, vsize=5, show=True):
         """
         Plot the equity curve of the trading strategy.
         
@@ -94,15 +102,23 @@ class strat_evaluator:
             xlabel (str): X-axis label for date.
             hsize (int): Horizontal size of the plot.
             vsize (int): Vertical size of the plot.
+            show (bool): If True, displays the plot immediately.
+        
+        Returns:
+            tuple: (fig, ax) Matplotlib figure and axes objects.
         """
-        plt.figure(figsize=(hsize, vsize))
-        plt.title(title)
-        plt.plot(self.data['cumulative_returns']*100, label='Cumulative Returns')
-        plt.ylabel(ylabel)
-        plt.xlabel(xlabel)
-        plt.grid(True)
-        plt.legend()
-        plt.show()
+        fig, ax = plt.subplots(figsize=(hsize, vsize))
+        ax.set_title(title)
+        ax.plot(self.data['cumulative_returns']*100, label='Cumulative Returns')
+        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        ax.grid(True)
+        ax.legend()
+        
+        if show:
+            plt.show()
+        
+        return fig, ax
     
     def calcArAvgReturn(self, returns=None, annualize=False, periods_in_year=12):
         """
