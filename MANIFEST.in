@@ -1,0 +1,23 @@
+# Include the README and LICENSE files
+include README.md
+include LICENSE
+
+# Include the requirements file
+include requirements.txt
+
+# Include the setup script
+include setup.py
+
+# Include all non-Python files in the package directory
+recursive-include strat_evaluator/data *
+recursive-include strat_evaluator/config *
+
+# Include any additional documentation
+recursive-include docs *
+recursive-include examples *
+
+# Exclude tests from the source distribution
+prune tests
+
+# Exclude specific file types (e.g., compiled Python files)
+global-exclude *.pyc *.pyo *.pyd __pycache__/
