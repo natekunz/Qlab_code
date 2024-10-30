@@ -33,7 +33,7 @@ class strat_evaluator:
         
         self.data = data
         self.predictor = series
-        self.mreturn = np.exp(self.data[["strat returns"]].resample('ME').sum())-1
+        self.mreturn = np.exp(self.data[["strat returns"]].resample('ME').sum()) - 1
             
     def plot_signals(self, fundamental=None, title=None, ylabel=None, xlabel='Date', hsize=11, vsize=5, bounds=False, show=True):
         """
@@ -109,7 +109,7 @@ class strat_evaluator:
         """
         fig, ax = plt.subplots(figsize=(hsize, vsize))
         ax.set_title(title)
-        ax.plot(self.data['cumulative_returns']*100, label='Cumulative Returns')
+        ax.plot(self.data['cumulative_returns'] * 100, label='Cumulative Returns')
         ax.set_ylabel(ylabel)
         ax.set_xlabel(xlabel)
         ax.grid(True)
@@ -120,7 +120,7 @@ class strat_evaluator:
         
         return fig, ax
     
-    def calcArAvgReturn(self, returns=None, annualize=False, periods_in_year=12):
+    def calcArAvgReturn(self, returns=None, annualize=False, periods_in_year=12) -> float:
         """
         Calculate the average return of a portfolio, with the option to annualize.
         
@@ -138,12 +138,13 @@ class strat_evaluator:
             rets = returns
         
         mean_m_return = np.mean(rets)
+        mean_m_return = float(mean_m_return)  # Ensure scalar float
         if annualize:
             mean_ret = periods_in_year * mean_m_return
-            return max(mean_ret, -1.0)
+            return float(max(mean_ret, -1.0))
         else:
             return mean_m_return
-        
+    
     def calcSD(self, returns=None, annualize=False) -> float:
         """
         Calculate the standard deviation of a vector of simple returns with the option to annualize.
@@ -161,7 +162,11 @@ class strat_evaluator:
             rets = returns
 
         sd_m = np.std(rets)
-        return np.sqrt(12) * sd_m if annualize else sd_m
+        sd_m = float(sd_m)  # Ensure scalar float
+        if annualize:
+            return float(np.sqrt(12) * sd_m)
+        else:
+            return sd_m
 
     def calcSharpe(self, risk_free_returns=None) -> float:
         """
@@ -185,7 +190,8 @@ class strat_evaluator:
         else:
             returns = self.mreturn.values.flatten()
 
-        return self.calcArAvgReturn(returns, annualize=True) / self.calcSD(returns, annualize=True)
+        sharpe_ratio = self.calcArAvgReturn(returns, annualize=True) / self.calcSD(returns, annualize=True)
+        return float(sharpe_ratio)
 
     def calcSortino(self, risk_free_returns=None, target_return=0.0) -> float:
         """
@@ -213,7 +219,8 @@ class strat_evaluator:
         downside_returns = np.copy(returns)
         downside_returns[returns > target_return] = 0
 
-        return self.calcArAvgReturn(returns, annualize=True) / self.calcSD(downside_returns, annualize=True)
+        sortino_ratio = self.calcArAvgReturn(returns, annualize=True) / self.calcSD(downside_returns, annualize=True)
+        return float(sortino_ratio)
 
     def calcMaxDrawdown(self) -> float:
         """
@@ -225,7 +232,8 @@ class strat_evaluator:
         cumulative_ret = np.cumprod(1 + self.mreturn)
         roll_max = np.maximum.accumulate(cumulative_ret)
         drawdowns = cumulative_ret / roll_max - 1
-        return np.min(drawdowns)
+        max_drawdown = np.min(drawdowns)
+        return float(max_drawdown)
 
     def calcPortfolioStatistics(self, code='^GSPC', risk_free_returns=None) -> dict:
         """
@@ -238,23 +246,29 @@ class strat_evaluator:
         Returns:
             dict: A dictionary containing 'alpha' and 'beta' of the portfolio relative to the market index.
         """
-        market_returns = yf.download(code)['Adj Close'].pct_change()
+        market_data = yf.download(code)
+        market_returns = market_data['Adj Close'].pct_change()
         market_returns = (market_returns + 1).resample('ME').prod() - 1
+
+        # Align the index of market_returns with self.mreturn
+        market_returns = market_returns.reindex(self.mreturn.index).fillna(0)
 
         if risk_free_returns is not None:
             if risk_free_returns.size != self.mreturn.size:
                 raise ValueError("'returns' and 'risk_free_returns' must be of the same size")
 
             returns = self.mreturn.values.flatten() - risk_free_returns
-            market_returns = market_returns.loc[self.mreturn.index]
             market_returns = market_returns.values - risk_free_returns
         else:
             returns = self.mreturn.values.flatten()
-            market_returns = market_returns.loc[self.mreturn.index].values
+            market_returns = market_returns.values
 
         X = sm.add_constant(market_returns * 100)
         model = sm.OLS(returns * 100, X)
         results = model.fit()
         
-        # Return alphas betas
-        return {'alpha': results.params[0], 'beta': results.params[1]}
+        # Return alpha and beta as floats
+        return {
+            'alpha': float(results.params[0]),
+            'beta': float(results.params[1])
+        }
