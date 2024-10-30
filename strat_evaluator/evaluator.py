@@ -33,7 +33,7 @@ class strat_evaluator:
         
         self.data = data
         self.predictor = series
-        self.mreturn = np.exp(self.data[["strat returns"]].resample('M').sum())-1
+        self.mreturn = np.exp(self.data["strat returns"].resample('ME').sum()) - 1
             
     def plot_signals(self, fundamental=None, title=None, ylabel=None, xlabel='Date', hsize=11, vsize=5, bounds=False, show=True):
         """
@@ -137,7 +137,7 @@ class strat_evaluator:
         else:
             rets = returns
         
-        mean_m_return = np.mean(rets)
+        mean_m_return = rets.mean()
         if annualize:
             mean_ret = periods_in_year * mean_m_return
             return max(mean_ret, -1.0)
@@ -160,7 +160,7 @@ class strat_evaluator:
         else:
             rets = returns
 
-        sd_m = np.std(rets)
+        sd_m = rets.std()
         return np.sqrt(12) * sd_m if annualize else sd_m
 
     def calcSharpe(self, risk_free_returns=None) -> float:
@@ -239,7 +239,7 @@ class strat_evaluator:
             dict: A dictionary containing 'alpha' and 'beta' of the portfolio relative to the market index.
         """
         market_returns = yf.download(code)['Adj Close'].pct_change()
-        market_returns = (market_returns + 1).resample('M').prod() - 1
+        market_returns = (market_returns + 1).resample('ME').prod() - 1
 
         if risk_free_returns is not None:
             if risk_free_returns.size != self.mreturn.size:
