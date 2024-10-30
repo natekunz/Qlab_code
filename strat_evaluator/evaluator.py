@@ -5,7 +5,7 @@ import seaborn as sns
 import yfinance as yf 
 import statsmodels.api as sm
 
-class strat_evaluator:
+class strat_evaluator1:
     """
     A class for evaluating trading strategies based on asset price data, trading signals,
     and fundamental series. It allows for the visualization of trading signals on asset price series,
